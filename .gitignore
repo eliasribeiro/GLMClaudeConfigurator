@@ -1,0 +1,75 @@
+# See https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
+# Compiled output
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+# Visual Studio caches/options
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+
+# Test results
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+*.coveragexml
+
+# Resharper/VS Code
+_ReSharper*/
+*.DotSettings.user
+.vscode/
+
+# Rider
+.idea/
+*.sln.iml
+
+# Others
+*.dbmdl
+*.bak
+*.orig
+*.tmp
+*.log
+*.svclog
+
+# Azure/Publish profiles
+[Aa]pp[Dd]ata/
+PublishProfiles/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Tooling
+*.pidb
+*.svd
+
+# Local settings
+appsettings.*.local.json
+
+# Generated
+**/obj/**
+**/bin/**
+
+# Project-specific
+GLMClaudeConfigurator/bin/
+GLMClaudeConfigurator/obj/
+GLMClaudeConfigurator/.claude/settings.json.backup
