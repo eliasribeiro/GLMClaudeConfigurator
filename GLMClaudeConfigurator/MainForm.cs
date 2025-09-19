@@ -133,10 +133,38 @@ namespace GLMClaudeConfigurator
             btnClose.Paint += (s, e) =>
             {
                 Button btn = (Button)s;
-                using (Font closeFont = new Font("Segoe UI", 12F, FontStyle.Bold))
+                // Tailwind CSS close button style
+                Rectangle rect = new Rectangle(0, 0, btn.Width - 1, btn.Height - 1);
+                
+                // Fundo transparente com hover effect
+                bool isHover = btn.ClientRectangle.Contains(btn.PointToClient(Cursor.Position));
+                if (isHover)
                 {
-                    TextRenderer.DrawText(e.Graphics, "✕", closeFont, btn.ClientRectangle, 
-                        Color.White, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+                    using (SolidBrush hoverBrush = new SolidBrush(Color.FromArgb(30, Color.Red)))
+                    {
+                        // Tailwind rounded-full (circular)
+                        using (GraphicsPath path = new GraphicsPath())
+                        {
+                            int radius = Math.Min(rect.Width, rect.Height) / 2;
+                            path.AddEllipse(rect.X, rect.Y, radius, radius);
+                            e.Graphics.FillPath(hoverBrush, path);
+                        }
+                    }
+                }
+
+                // Desenhar o ícone "✕" (Tailwind-style)
+                using (Font iconFont = new Font("Segoe UI", 10F, FontStyle.Bold))
+                {
+                    Color iconColor = isHover ? Color.FromArgb(239, 68, 68) : Color.White; // red-500 on hover
+                    using (Brush brush = new SolidBrush(iconColor))
+                    {
+                        StringFormat sf = new StringFormat
+                        {
+                            Alignment = StringAlignment.Center,
+                            LineAlignment = StringAlignment.Center
+                        };
+                        e.Graphics.DrawString("✕", iconFont, brush, rect, sf);
+                    }
                 }
             };
             btnClose.MouseEnter += (s, e) => btnClose.ForeColor = Color.FromArgb(239, 68, 68);
@@ -337,10 +365,14 @@ namespace GLMClaudeConfigurator
             this.CancelButton = btnExit;      // Esc para sair
 
             // Adicionar eventos de mouse para arrastar o formulário
-            headerPanel.MouseDown += Form_MouseDown;
-            lblTitle.MouseDown += Form_MouseDown;
-            lblSubtitle.MouseDown += Form_MouseDown;
-            iconBox.MouseDown += Form_MouseDown;
+            headerPanel.MouseDown += StartDrag;
+            lblTitle.MouseDown += StartDrag;
+            lblSubtitle.MouseDown += StartDrag;
+            iconBox.MouseDown += StartDrag;
+            
+            // Adicionar eventos de arraste ao formulário
+            this.MouseMove += PerformDrag;
+            this.MouseUp += StopDrag;
 
         }
 
@@ -356,27 +388,44 @@ namespace GLMClaudeConfigurator
             return new Region(path);
         }
 
-        private void HeaderPanel_Paint(object sender, PaintEventArgs e)
+        private void HeaderPanel_Paint(object? sender, PaintEventArgs e)
         {
+            // Tailwind CSS blue-600 to blue-700 gradient
             using (LinearGradientBrush brush = new LinearGradientBrush(
                 headerPanel.ClientRectangle,
-                Color.FromArgb(59, 130, 246), // blue-500
                 Color.FromArgb(37, 99, 235),  // blue-600
+                Color.FromArgb(29, 78, 216),   // blue-700
                 LinearGradientMode.Horizontal))
             {
                 e.Graphics.FillRectangle(brush, headerPanel.ClientRectangle);
             }
+
+            // Adicionar sombra sutil inferior (Tailwind-style)
+            using (LinearGradientBrush shadowBrush = new LinearGradientBrush(
+                new Rectangle(0, headerPanel.Height - 2, headerPanel.Width, 2),
+                Color.FromArgb(30, Color.Black),
+                Color.Transparent,
+                LinearGradientMode.Vertical))
+            {
+                e.Graphics.FillRectangle(shadowBrush, 0, headerPanel.Height - 2, headerPanel.Width, 2);
+            }
         }
 
-        private void ContentPanel_Paint(object sender, PaintEventArgs e)
+        private void ContentPanel_Paint(object? sender, PaintEventArgs e)
         {
-            // Adicionar efeito de borda branca sutil
-            using (Pen pen = new Pen(Color.FromArgb(51, 65, 85), 2)) // slate-700
+            // Tailwind CSS glassmorphism effect
+            using (SolidBrush brush = new SolidBrush(Color.FromArgb(248, 250, 252))) // slate-50
             {
-                Rectangle rect = new Rectangle(1, 1, contentPanel.Width - 2, contentPanel.Height - 2);
+                e.Graphics.FillRectangle(brush, contentPanel.ClientRectangle);
+            }
+
+            // Adicionar borda sutil (Tailwind slate-200)
+            using (Pen pen = new Pen(Color.FromArgb(226, 232, 240), 1)) // slate-200
+            {
+                Rectangle rect = new Rectangle(0, 0, contentPanel.Width - 1, contentPanel.Height - 1);
                 using (GraphicsPath path = new GraphicsPath())
                 {
-                    int radius = 15;
+                    int radius = 12; // Tailwind rounded-lg
                     path.AddArc(rect.X, rect.Y, radius, radius, 180, 90);
                     path.AddArc(rect.X + rect.Width - radius, rect.Y, radius, radius, 270, 90);
                     path.AddArc(rect.X + rect.Width - radius, rect.Y + rect.Height - radius, radius, radius, 0, 90);
@@ -385,6 +434,16 @@ namespace GLMClaudeConfigurator
                     e.Graphics.DrawPath(pen, path);
                 }
             }
+
+            // Adicionar sombra sutil (Tailwind-style)
+            using (LinearGradientBrush shadowBrush = new LinearGradientBrush(
+                new Rectangle(2, contentPanel.Height - 3, contentPanel.Width - 4, 3),
+                Color.FromArgb(20, Color.Black),
+                Color.Transparent,
+                LinearGradientMode.Vertical))
+            {
+                e.Graphics.FillRectangle(shadowBrush, 2, contentPanel.Height - 3, contentPanel.Width - 4, 3);
+            }
         }
 
         private void TextBox_Paint(object? sender, PaintEventArgs e)
@@ -392,9 +451,91 @@ namespace GLMClaudeConfigurator
             TextBox? textBox = sender as TextBox;
             if (textBox != null)
             {
-                using (Pen pen = new Pen(Color.FromArgb(51, 65, 85), 1)) // slate-700
+                // Tailwind CSS input style
+                Rectangle rect = new Rectangle(0, 0, textBox.Width - 1, textBox.Height - 1);
+                
+                // Fundo branco
+                using (SolidBrush bgBrush = new SolidBrush(Color.White))
                 {
-                    Rectangle rect = new Rectangle(0, 0, textBox.Width - 1, textBox.Height - 1);
+                    e.Graphics.FillRectangle(bgBrush, rect);
+                }
+
+                // Borda slate-300 com hover effect
+                Color borderColor = textBox.Focused ? 
+                    Color.FromArgb(59, 130, 246) : // blue-500 when focused
+                    Color.FromArgb(203, 213, 225); // slate-300 default
+                    
+                using (Pen pen = new Pen(borderColor, 1))
+                {
+                    // Tailwind rounded-md (6px radius)
+                    using (GraphicsPath path = new GraphicsPath())
+                    {
+                        int radius = 6;
+                        path.AddArc(rect.X, rect.Y, radius, radius, 180, 90);
+                        path.AddArc(rect.X + rect.Width - radius, rect.Y, radius, radius, 270, 90);
+                        path.AddArc(rect.X + rect.Width - radius, rect.Y + rect.Height - radius, radius, radius, 0, 90);
+                        path.AddArc(rect.X, rect.Y + rect.Height - radius, radius, radius, 90, 90);
+                        path.CloseFigure();
+                        e.Graphics.DrawPath(pen, path);
+                    }
+                }
+
+                // Adicionar sombra interna sutil
+                if (textBox.Focused)
+                {
+                    using (Pen shadowPen = new Pen(Color.FromArgb(30, 59, 130, 246), 1))
+                    {
+                        Rectangle shadowRect = new Rectangle(rect.X + 1, rect.Y + 1, rect.Width - 2, rect.Height - 2);
+                        using (GraphicsPath shadowPath = new GraphicsPath())
+                        {
+                            int shadowRadius = 5;
+                            shadowPath.AddArc(shadowRect.X, shadowRect.Y, shadowRadius, shadowRadius, 180, 90);
+                            shadowPath.AddArc(shadowRect.X + shadowRect.Width - shadowRadius, shadowRect.Y, shadowRadius, shadowRadius, 270, 90);
+                            shadowPath.AddArc(shadowRect.X + shadowRect.Width - shadowRadius, shadowRect.Y + shadowRect.Height - shadowRadius, shadowRadius, shadowRadius, 0, 90);
+                            shadowPath.AddArc(shadowRect.X, shadowRect.Y + shadowRect.Height - shadowRadius, shadowRadius, shadowRadius, 90, 90);
+                            shadowPath.CloseFigure();
+                            e.Graphics.DrawPath(shadowPen, shadowPath);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void Button_Paint(object? sender, PaintEventArgs e)
+        {
+            if (sender is Button button)
+            {
+                Rectangle rect = new Rectangle(0, 0, button.Width - 1, button.Height - 1);
+                
+                // Tailwind CSS button style
+                Color bgColor = Color.FromArgb(59, 130, 246); // blue-500
+                Color hoverColor = Color.FromArgb(37, 99, 235); // blue-600
+                Color currentColor = button.ClientRectangle.Contains(button.PointToClient(Cursor.Position)) ? 
+                    hoverColor : bgColor;
+                
+                // Fundo com gradiente sutil
+                using (LinearGradientBrush brush = new LinearGradientBrush(
+                    rect,
+                    currentColor,
+                    Color.FromArgb(currentColor.R - 10, currentColor.G - 10, currentColor.B - 10),
+                    LinearGradientMode.Vertical))
+                {
+                    // Tailwind rounded-lg (8px radius)
+                    using (GraphicsPath path = new GraphicsPath())
+                    {
+                        int radius = 8;
+                        path.AddArc(rect.X, rect.Y, radius, radius, 180, 90);
+                        path.AddArc(rect.X + rect.Width - radius, rect.Y, radius, radius, 270, 90);
+                        path.AddArc(rect.X + rect.Width - radius, rect.Y + rect.Height - radius, radius, radius, 0, 90);
+                        path.AddArc(rect.X, rect.Y + rect.Height - radius, radius, radius, 90, 90);
+                        path.CloseFigure();
+                        e.Graphics.FillPath(brush, path);
+                    }
+                }
+
+                // Borda sutil (Tailwind blue-600)
+                using (Pen pen = new Pen(Color.FromArgb(37, 99, 235), 1))
+                {
                     using (GraphicsPath path = new GraphicsPath())
                     {
                         int radius = 8;
@@ -406,38 +547,15 @@ namespace GLMClaudeConfigurator
                         e.Graphics.DrawPath(pen, path);
                     }
                 }
-            }
-        }
 
-        private void Button_Paint(object? sender, PaintEventArgs e)
-        {
-            Button? button = sender as Button;
-            if (button != null)
-            {
-                using (GraphicsPath path = new GraphicsPath())
+                // Adicionar sombra externa sutil
+                using (LinearGradientBrush shadowBrush = new LinearGradientBrush(
+                    new Rectangle(rect.X + 2, rect.Y + rect.Height, rect.Width - 4, 2),
+                    Color.FromArgb(20, Color.Black),
+                    Color.Transparent,
+                    LinearGradientMode.Vertical))
                 {
-                    int radius = 12;
-                    Rectangle rect = new Rectangle(0, 0, button.Width - 1, button.Height - 1);
-                    path.AddArc(rect.X, rect.Y, radius, radius, 180, 90);
-                    path.AddArc(rect.X + rect.Width - radius, rect.Y, radius, radius, 270, 90);
-                    path.AddArc(rect.X + rect.Width - radius, rect.Y + rect.Height - radius, radius, radius, 0, 90);
-                    path.AddArc(rect.X, rect.Y + rect.Height - radius, radius, radius, 90, 90);
-                    path.CloseFigure();
-
-                    using (LinearGradientBrush brush = new LinearGradientBrush(rect, button.BackColor, 
-                        ControlPaint.Light(button.BackColor), LinearGradientMode.Vertical))
-                    {
-                        e.Graphics.FillPath(brush, path);
-                    }
-
-                    using (Pen pen = new Pen(ControlPaint.Light(button.BackColor, 0.8f), 1))
-                    {
-                        e.Graphics.DrawPath(pen, path);
-                    }
-
-                    // Adicionar texto centralizado
-                    TextRenderer.DrawText(e.Graphics, button.Text, button.Font, rect, button.ForeColor, 
-                        TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+                    e.Graphics.FillRectangle(shadowBrush, rect.X + 2, rect.Y + rect.Height, rect.Width - 4, 2);
                 }
             }
         }
@@ -487,32 +605,42 @@ namespace GLMClaudeConfigurator
             e.ToolTipSize = new Size(e.ToolTipSize.Width + 10, e.ToolTipSize.Height + 10);
         }
 
-        // Variáveis para arrastar o formulário
-        private bool mouseDown;
-        private Point lastLocation;
+        // Variáveis para arrastar o formulário (Tailwind-style drag)
+        private bool isDragging = false;
+        private Point dragStartPoint;
+        private Point formStartLocation;
 
-        private void Form_MouseDown(object? sender, MouseEventArgs e)
+        // Método para iniciar o arraste (estilo Tailwind)
+        private void StartDrag(object? sender, MouseEventArgs e)
         {
-            mouseDown = true;
-            lastLocation = e.Location;
-        }
-
-        protected override void OnMouseMove(MouseEventArgs e)
-        {
-            if (mouseDown)
+            if (e.Button == MouseButtons.Left)
             {
-                this.Location = new Point(
-                    (this.Location.X - lastLocation.X) + e.X, 
-                    (this.Location.Y - lastLocation.Y) + e.Y);
-                this.Update();
+                isDragging = true;
+                dragStartPoint = e.Location;
+                formStartLocation = this.Location;
+                this.Cursor = Cursors.SizeAll;
             }
-            base.OnMouseMove(e);
         }
 
-        protected override void OnMouseUp(MouseEventArgs e)
+        // Método para arrastar (estilo Tailwind)
+        private void PerformDrag(object? sender, MouseEventArgs e)
         {
-            mouseDown = false;
-            base.OnMouseUp(e);
+            if (isDragging)
+            {
+                int deltaX = e.X - dragStartPoint.X;
+                int deltaY = e.Y - dragStartPoint.Y;
+                this.Location = new Point(formStartLocation.X + deltaX, formStartLocation.Y + deltaY);
+            }
+        }
+
+        // Método para parar o arraste (estilo Tailwind)
+        private void StopDrag(object? sender, MouseEventArgs e)
+        {
+            if (isDragging)
+            {
+                isDragging = false;
+                this.Cursor = Cursors.Default;
+            }
         }
 
         // Comentário: Manipulador de evento para abrir o seletor de pasta do repositório
